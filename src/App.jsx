@@ -1,11 +1,12 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const APIs = [
   {
     id: "trivia",
-    label: "Trivia Question",
-    icon: "🧠",
-    color: "#FF6B35",
+    label: "Knowledge Base",
+    tag: "TRIVIA",
+    color: "#2563eb",
     fetch: async () => {
       const res = await fetch("https://opentdb.com/api.php?amount=1&type=multiple");
       const data = await res.json();
@@ -13,15 +14,15 @@ const APIs = [
       return {
         title: decodeURIComponent(q.category),
         body: decodeURIComponent(q.question),
-        sub: `Difficulty: ${q.difficulty} • Answer: ${decodeURIComponent(q.correct_answer)}`,
+        sub: `Level: ${q.difficulty} • Correct: ${decodeURIComponent(q.correct_answer)}`,
       };
     },
   },
   {
     id: "dog",
-    label: "Random Dog",
-    icon: "🐶",
-    color: "#4ECDC4",
+    label: "Visual Asset",
+    tag: "CURATED IMAGES",
+    color: "#059669",
     fetch: async () => {
       const res = await fetch("https://dog.ceo/api/breeds/image/random");
       const data = await res.json();
@@ -29,30 +30,30 @@ const APIs = [
       return {
         title: breed.charAt(0).toUpperCase() + breed.slice(1),
         image: data.message,
-        sub: "via Dog CEO API",
+        sub: "Sourced via Dog CEO API",
       };
     },
   },
   {
     id: "advice",
-    label: "Life Advice",
-    icon: "✨",
-    color: "#A855F7",
+    label: "Professional Guidance",
+    tag: "ADVICE",
+    color: "#7c3aed",
     fetch: async () => {
       const res = await fetch("https://api.adviceslip.com/advice");
       const data = await res.json();
       return {
-        title: `Advice #${data.slip.id}`,
-        body: `"${data.slip.advice}"`,
-        sub: "via Advice Slip API",
+        title: `Protocol #${data.slip.id}`,
+        body: data.slip.advice,
+        sub: "Intelligence provided by Advice Slip",
       };
     },
   },
   {
     id: "joke",
-    label: "Random Joke",
-    icon: "😂",
-    color: "#F59E0B",
+    label: "Human Element",
+    tag: "ENTERTAINMENT",
+    color: "#d97706",
     fetch: async () => {
       const res = await fetch("https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist");
       const data = await res.json();
@@ -60,13 +61,13 @@ const APIs = [
       return {
         title: data.category,
         body,
-        sub: `Type: ${data.type}`,
+        sub: `Standard Classification: ${data.type}`,
       };
     },
   },
 ];
 
-function Card({ api }) {
+const Card = ({ api, index }) => {
   const [state, setState] = useState({ status: "idle", data: null, error: null });
 
   const handleFetch = async () => {
@@ -75,147 +76,192 @@ function Card({ api }) {
       const data = await api.fetch();
       setState({ status: "done", data, error: null });
     } catch (e) {
-      setState({ status: "error", data: null, error: "Failed to fetch. Try again." });
+      setState({ status: "error", data: null, error: "Network communication error." });
     }
   };
 
-  const { status, data, error } = state;
-
   return (
-    <div style={{
-      background: "#111",
-      border: `1px solid ${api.color}33`,
-      borderRadius: 16,
-      padding: 28,
-      display: "flex",
-      flexDirection: "column",
-      gap: 20,
-      position: "relative",
-      overflow: "hidden",
-      transition: "border-color 0.3s",
-    }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = api.color + "88"}
-      onMouseLeave={e => e.currentTarget.style.borderColor = api.color + "33"}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+      whileHover={{ y: -6 }}
+      style={{
+        background: "#ffffff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "20px",
+        padding: "32px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "24px",
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.03)",
+        position: "relative",
+        overflow: "hidden",
+      }}
     >
-      {/* Glow blob */}
-      <div style={{
-        position: "absolute", top: -40, right: -40,
-        width: 120, height: 120, borderRadius: "50%",
-        background: api.color + "22", filter: "blur(30px)", pointerEvents: "none",
-      }} />
-
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ fontSize: 28 }}>{api.icon}</span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div style={{ color: api.color, fontSize: 11, fontFamily: "monospace", letterSpacing: 2, textTransform: "uppercase" }}>API Explorer</div>
-          <div style={{ color: "#fff", fontSize: 18, fontWeight: 700, fontFamily: "'Georgia', serif" }}>{api.label}</div>
+          <span style={{ 
+            color: api.color, 
+            fontSize: "11px", 
+            fontWeight: "700", 
+            letterSpacing: "1.5px", 
+            textTransform: "uppercase" 
+          }}>
+            {api.tag}
+          </span>
+          <h2 style={{ 
+            color: "#1e293b", 
+            fontSize: "22px", 
+            fontWeight: "600", 
+            margin: "4px 0 0 0",
+            fontFamily: "Inter, system-ui, sans-serif" 
+          }}>
+            {api.label}
+          </h2>
         </div>
+        <div style={{ 
+          width: "8px", 
+          height: "8px", 
+          borderRadius: "50%", 
+          background: api.color,
+          boxShadow: `0 0 12px ${api.color}` 
+        }} />
       </div>
 
       <button
         onClick={handleFetch}
-        disabled={status === "loading"}
+        disabled={state.status === "loading"}
         style={{
-          background: status === "loading" ? "#222" : api.color,
-          color: status === "loading" ? api.color : "#000",
-          border: `1.5px solid ${api.color}`,
-          borderRadius: 8,
-          padding: "10px 20px",
-          fontFamily: "monospace",
-          fontSize: 13,
-          fontWeight: 700,
-          letterSpacing: 1,
-          cursor: status === "loading" ? "not-allowed" : "pointer",
-          transition: "all 0.2s",
+          background: "#1e293b",
+          color: "#ffffff",
+          border: "none",
+          borderRadius: "12px",
+          padding: "14px 24px",
+          fontSize: "14px",
+          fontWeight: "500",
+          cursor: state.status === "loading" ? "not-allowed" : "pointer",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           display: "flex",
+          justifyContent: "center",
           alignItems: "center",
-          gap: 8,
+          gap: "10px",
+          outline: "none",
         }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "#334155")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "#1e293b")}
       >
-        {status === "loading" ? (
-          <>
-            <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
-            FETCHING...
-          </>
-        ) : "→ FETCH DATA"}
+        {state.status === "loading" ? (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+            style={{ width: "16px", height: "16px", border: "2px solid #ffffff", borderTopColor: "transparent", borderRadius: "50%" }}
+          />
+        ) : (
+          "Request Data"
+        )}
       </button>
 
-      {error && (
-        <div style={{ color: "#ff6b6b", fontFamily: "monospace", fontSize: 13 }}>{error}</div>
-      )}
+      <AnimatePresence mode="wait">
+        {state.data && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.4, ease: "circOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div style={{
+              background: "#f8fafc",
+              borderRadius: "14px",
+              padding: "20px",
+              border: "1px solid #f1f5f9",
+            }}>
+              {state.data.image ? (
+                <>
+                  <img src={state.data.image} alt="content" style={{ width: "100%", borderRadius: "8px", marginBottom: "12px", display: "block" }} />
+                  <p style={{ color: "#64748b", fontSize: "12px", margin: 0 }}>{state.data.sub}</p>
+                </>
+              ) : (
+                <>
+                  <div style={{ color: api.color, fontSize: "11px", fontWeight: "700", marginBottom: "8px" }}>{state.data.title}</div>
+                  <div style={{ color: "#334155", fontSize: "15px", lineHeight: "1.6", fontWeight: "400" }}>{state.data.body}</div>
+                  <div style={{ color: "#94a3b8", fontSize: "12px", marginTop: "12px", borderTop: "1px solid #e2e8f0", paddingTop: "8px" }}>{state.data.sub}</div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {data && (
-        <div style={{
-          background: "#0a0a0a",
-          borderRadius: 10,
-          padding: 18,
-          borderLeft: `3px solid ${api.color}`,
-          animation: "fadeIn 0.4s ease",
-        }}>
-          {data.image ? (
-            <>
-              <div style={{ color: api.color, fontFamily: "monospace", fontSize: 11, marginBottom: 10, textTransform: "uppercase", letterSpacing: 2 }}>{data.title}</div>
-              <img src={data.image} alt="dog" style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 8 }} />
-              <div style={{ color: "#555", fontFamily: "monospace", fontSize: 11, marginTop: 8 }}>{data.sub}</div>
-            </>
-          ) : (
-            <>
-              <div style={{ color: api.color, fontFamily: "monospace", fontSize: 11, marginBottom: 8, textTransform: "uppercase", letterSpacing: 2 }}>{data.title}</div>
-              <div style={{ color: "#e0e0e0", fontSize: 15, lineHeight: 1.6, fontFamily: "'Georgia', serif", whiteSpace: "pre-line" }}>{data.body}</div>
-              <div style={{ color: "#444", fontFamily: "monospace", fontSize: 11, marginTop: 10 }}>{data.sub}</div>
-            </>
-          )}
-        </div>
+      {state.error && (
+        <div style={{ color: "#ef4444", fontSize: "13px", textAlign: "center" }}>{state.error}</div>
       )}
-    </div>
+    </motion.div>
   );
-}
+};
 
 export default function App() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#0a0a0a",
-      padding: "48px 24px",
-      fontFamily: "system-ui, sans-serif",
+      background: "#fcfcfd",
+      padding: "80px 24px",
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      color: "#1e293b",
     }}>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
-
-      <div style={{ maxWidth: 960, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 52 }}>
-          <div style={{ color: "#333", fontFamily: "monospace", fontSize: 12, letterSpacing: 4, textTransform: "uppercase", marginBottom: 12 }}>
-            ◈ Public API Explorer ◈
-          </div>
-          <h1 style={{
-            color: "#fff",
-            fontSize: "clamp(32px, 5vw, 56px)",
-            fontFamily: "'Georgia', serif",
-            fontWeight: 400,
-            margin: 0,
-            lineHeight: 1.1,
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+        <motion.header 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ textAlign: "center", marginBottom: "80px" }}
+        >
+          <span style={{ 
+            background: "#f1f5f9", 
+            padding: "8px 16px", 
+            borderRadius: "100px", 
+            fontSize: "12px", 
+            fontWeight: "600", 
+            letterSpacing: "1px",
+            color: "#64748b"
           }}>
-            4 APIs.<br />
-            <span style={{ color: "#555" }}>One Click Away.</span>
+            V1.0 DATA INTERFACE
+          </span>
+          <h1 style={{ 
+            fontSize: "clamp(40px, 6vw, 64px)", 
+            fontWeight: "800", 
+            letterSpacing: "-0.04em", 
+            margin: "24px 0 16px 0",
+            lineHeight: 1 
+          }}>
+            Universal API <span style={{ color: "#94a3b8" }}>Aggregator.</span>
           </h1>
-          <p style={{ color: "#444", fontFamily: "monospace", fontSize: 13, marginTop: 16 }}>
-            Click any button to fetch live data from free public APIs
+          <p style={{ color: "#64748b", fontSize: "18px", maxWidth: "600px", margin: "0 auto", lineHeight: "1.6" }}>
+            A professional ecosystem designed to interact with diverse public data endpoints through a unified, high-performance interface.
           </p>
-        </div>
+        </motion.header>
 
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
-          gap: 24,
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gap: "32px",
         }}>
-          {APIs.map(api => <Card key={api.id} api={api} />)}
+          {APIs.map((api, idx) => (
+            <Card key={api.id} api={api} index={idx} />
+          ))}
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 48, color: "#2a2a2a", fontFamily: "monospace", fontSize: 11, letterSpacing: 2 }}>
-          TRIVIA DB · DOG CEO · ADVICE SLIP · JOKE API
-        </div>
+        <footer style={{ 
+          marginTop: "100px", 
+          textAlign: "center", 
+          borderTop: "1px solid #e2e8f0", 
+          paddingTop: "40px",
+          color: "#94a3b8",
+          fontSize: "13px",
+          letterSpacing: "1px"
+        }}>
+          SYSTEM STATUS: OPERATIONAL · ENCRYPTION: ACTIVE · DATA SOURCE: PUBLIC CLOUD
+        </footer>
       </div>
     </div>
   );
